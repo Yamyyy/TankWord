@@ -4,8 +4,8 @@ package bullet;
 import base.BaseObject;
 import base.Dir;
 import base.Group;
-import graph.ImageSet;
-import graph.TankFrame;
+import res.ImageSet;
+import res.Map;
 import tank.Tank;
 
 import java.awt.*;
@@ -13,27 +13,39 @@ import java.awt.image.BufferedImage;
 
 public class Bullet extends BaseObject {
 
-    private int speed = 10;
+    private int speed;
     private Dir dir;
-    private boolean live = true;
-    private Group group; //true is good
+    private Group group;
+    private Map map;
+    private int player;
 
-
-    public Bullet(int x,int y,Dir dir){
-        this.x = x;
-        this.y = y;
-        this.dir = dir;
-    }
-    public Bullet(double x,double y,Dir dir,Group group){
-        this.x = (int)x;
-        this.y = (int)y;
+    public Bullet(Map map,double x, double y, Dir dir, Group group,int player){
+        super((int)x,(int)y,10,10,true,true,null);
+        this.map = map;
         this.dir = dir;
         this.group = group;
+        this.speed = 4;
+        this.player = player;
+    }
+
+    @Override
+    public void beTankCollision(Tank tank) {
+        setAlive(false);
+    }
+
+    @Override
+    public void beBulletCollision(Bullet bullet) {
+        die();
+    }
+
+    private void die() {
+        setAlive(false);
     }
 
     public void draw(Graphics g){
+        if (!isAlive())return;
         move();
-        g.drawImage(getImage(dir),x,y,null);
+        g.drawImage(getImage(dir),getX(),getY(),null);
     }
 
     private BufferedImage getImage(Dir dir){
@@ -44,53 +56,64 @@ public class Bullet extends BaseObject {
             case L:return ImageSet.BulletL;
             case R:return ImageSet.BulletR;
         }
-        return ImageSet.PlayerImageU;
+        return ImageSet.BulletU;
     }
     private void move(){
         switch (dir){
-            case U:y -= speed;break;
-            case D:y += speed;break;
-            case L:x -= speed;break;
-            case R:x += speed;break;
+            case U:setY(getY()-speed); ;break;
+            case D:setY(getY()+speed);break;
+            case L:setX(getX()-speed);break;
+            case R:setX(getX()+speed);break;
         }
-
-
-    }
-
-    public void collidesWithTank(Tank tank){
-
-        System.out.println(group+"----"+tank.getGroup());
-        if (!tank.getLive())return;
-        if (group.equals(tank.getGroup()))return;
-
-        Rectangle rect = new Rectangle(x,y, ImageSet.BulletU.getWidth(),ImageSet.BulletU.getWidth() );
-        Rectangle rectTank = new Rectangle(tank.getX(),tank.getY(),ImageSet.PlayerImageU.getWidth(),ImageSet.PlayerImageU.getHeight());
-        if(rect.intersects(rectTank)){
-            this.setLive(false);
-            tank.die();
+        //1.边界测试
+        if (BaseObject.boundaryCheck(this)){
+            setAlive(false);
         }
-    }
-    public void collidesWithBlock(BaseObject object){
+        else{
 
-        if (object instanceof Tank)return;
+            //物体碰撞测试 是否能相撞
+            for(BaseObject object:map.getBaseObjects()){
 
+                //判断是否是自己
+                if (this == object)
+                    continue;  //先判断o是否为本对象，this 指向当前的对象
+                //物体是否存活
+                if (!this.isAlive()&&!object.isAlive())continue;
 
-        for (BaseObject baseObject:TankFrame.INSTANCE.map.objects) {
-            Rectangle rect = new Rectangle(baseObject.getX(), baseObject.getY(), 60, 60);
-            Rectangle rectTank = new Rectangle(this.getX(), this.getY(), 60, 60);
-            if (rectTank.intersects(rect)) {
-                if(BaseObject.ObjectBlock(object, baseObject))
-                    this.setLive(false);
-                baseObject.beCollide();
+                //同group bullet不做处理
+                if (object instanceof Bullet&&((Bullet) object).getGroup()==this.getGroup())continue;
+
+                //同group tank不做处理
+                if (object instanceof Tank&&((Tank) object).getGroup()==this.getGroup())continue;
+
+                //是否发生碰撞
+                if(BaseObject.kickCheck(this,object)) {
+                    //能相撞
+                    //与bullet相撞
+                    if (object instanceof Bullet&&group!=((Bullet) object).getGroup()){
+                        beBulletCollision((Bullet)object);
+                        object.beBulletCollision(this);
+                    }
+                    else {
+                        beBulletCollision(this);
+                        object.beBulletCollision(this);
+                    }
+                }
+
             }
         }
     }
 
-    public boolean isLive() {
-        return live;
+
+    public Group getGroup() {
+        return group;
     }
 
-    public void setLive(boolean live) {
-        this.live = live;
+    public int getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(int player) {
+        this.player = player;
     }
 }

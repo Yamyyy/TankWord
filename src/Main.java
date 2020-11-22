@@ -4,12 +4,8 @@ import java.io.IOException;
 
 public class Main {
 
-    /**
-     *
-     *@Description:主函数、程序入口
-     * @param args
-     */
-    public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException, InterruptedException {
         Client client = new Client();
         client.launchFrame();
     }

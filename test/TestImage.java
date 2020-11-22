@@ -1,4 +1,4 @@
-import graph.ImageSet;
+import res.ImageSet;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
@@ -15,8 +15,8 @@ public class TestImage {
     public void testLoadImage() throws IOException {
 
 
-            BufferedImage image = ImageSet.PlayerImageU;
-        BufferedImage imageU = ImageIO.read(ImageSet.class.getClassLoader().getResourceAsStream("resource/image/player.png"));
+            BufferedImage image = ImageSet.Player1ImageU;
+        BufferedImage imageU = ImageIO.read(ImageSet.class.getClassLoader().getResourceAsStream("resource/image/format/player1.png"));
             assertNotNull(image);
 
     }
@@ -25,13 +25,18 @@ public class TestImage {
     public void testRotateImage(){
 
         try {
-            BufferedImage image = ImageIO.read(TestImage.class.getClassLoader().getResourceAsStream("resource/image/player.png"));
-            BufferedImage imagel = rotateImage(image,90);
-            assertNotNull(imagel);
+            BufferedImage[] explodes = new BufferedImage[8];
+            for (int i=0;i<8;i++){
+                explodes[i] = ImageIO.read(ImageSet.class.getClassLoader().getResourceAsStream("resource/image/blast"+i+".gif"));
+                assertNotNull(explodes[i]);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
+    
 
     /** * 旋转图片为指定角度  图片宽高不变*
      * @param bufferedimage * 目标图像 *
@@ -50,6 +55,12 @@ public class TestImage {
         graphics2d.dispose();
 
         return img;// 返回复制好的图片，原图片依然没有变，没有旋转，下次还可以使用。
+    }
+
+    @Test
+    public void testWall() throws IOException {
+       BufferedImage Wall = ImageIO.read(ImageSet.class.getClassLoader().getResourceAsStream("resource/image/format/wall.gif"));
+       assertNotNull(Wall);
     }
 
 }
